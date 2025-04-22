@@ -10,7 +10,7 @@ pub fn build(b: *std.Build) void {
     target.cpu_features_add.addFeature(@intFromEnum(std.Target.arm.Feature.thumb_mode));
     const optimize = .ReleaseSmall;
 
-    const exe = b.addExecutable(.{
+    var exe = b.addExecutable(.{
         .name = "out",
         .root_source_file = b.path("src/main.zig"),
         .target = b.resolveTargetQuery(target),
@@ -24,8 +24,8 @@ pub fn build(b: *std.Build) void {
 
     const objcopy_step = exe.addObjCopy(.{ .format = .bin });
     const install_bin_step = b.addInstallBinFile(objcopy_step.getOutput(), "out.gba");
-    install_bin_step.step.dependOn(&objcopy_step.step);
 
+    install_bin_step.step.dependOn(&objcopy_step.step);
     b.getInstallStep().dependOn(&install_bin_step.step);
 
     const run_cmd = b.addSystemCommand(&.{ "mgba", b.getInstallPath(.bin, "out.gba") });
