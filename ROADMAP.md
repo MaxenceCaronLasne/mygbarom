@@ -6,9 +6,9 @@
     - [x] Write a correct header
     - [x] Disable interrupts
     - [x] Loop
-  - [ ] Write a program that shows three points on the screen
-    - [ ] Put dots in VRAM
-    - [ ] Then loop
+  - [x] Write a program that shows three points on the screen
+    - [x] Put dots in VRAM
+    - [x] Then loop
   - [ ] Write a program that shows a background and a sprite that can be moved
     - [ ] Move data from ROM to RAM
     - [ ] Encode tile atlas

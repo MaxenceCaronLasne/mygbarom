@@ -1,3 +1,6 @@
+const IO_REGISTERS = 0x04000000;
+const VRAM = 0x06000000;
+
 const Header = extern struct {
     entry_point: u32,
     nintendo_logo: [156]u8,
@@ -91,5 +94,13 @@ export fn _start() noreturn {
         \\add r0, pc, #1
         \\bx r0
     );
+
+    const io_reg: *volatile u16 = @ptrFromInt(IO_REGISTERS);
+    io_reg.* = 0x0403;
+    const vram: [*]volatile u16 = @ptrFromInt(VRAM);
+    vram[120 + 80 * 240] = 0x001F;
+    vram[136 + 80 * 240] = 0x03E0;
+    vram[120 + 96 * 240] = 0x7C00;
+
     while (true) {}
 }
