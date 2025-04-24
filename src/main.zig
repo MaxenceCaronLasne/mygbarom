@@ -33,39 +33,27 @@ const SpriteSize = enum(u2) {
     size_64,
 };
 
-const ObjAttr0 = packed struct(u16) {
+const ObjAttr = packed struct(u48) {
     y: u8 = 0,
     object_mode: ObjMode = .normal,
     gfx: ObjGfx = .normal,
     is_mosaic_enabled: bool = false,
     color_mode: ColorMode = .bpp4,
     shape: SpriteShape = .square,
-};
-
-const ObjAttr1 = packed struct(u16) {
     x: u9 = 0,
     _: u3 = 0,
     is_hflip: bool = false,
     is_vflip: bool = false,
     size: SpriteSize = .size_8,
-};
-
-const ObjAttr2 = packed struct(u16) {
-    tid: u10,
-    priority: u2,
-    palette_blank: u4,
-};
-
-const Obj = packed union {
-    attr0: ObjAttr0,
-    attr1: ObjAttr1,
-    attr2: ObjAttr2,
+    tid: u10 = 0,
+    priority: u2 = 0,
+    palette_blank: u4 = 0,
 };
 
 const IO_DISPLAY_CONTROL: *volatile DisplayControl = @ptrFromInt(0x04000000);
 const VRAM: [*]volatile u16 = @ptrFromInt(0x06000000);
 const VRAM_OBJ_TILE: *volatile [512]u32 = @ptrFromInt(0x06010000);
-const OAM: *volatile [512]Obj = @ptrFromInt(0x07000000);
+const OAM: *volatile ObjAttr = @ptrFromInt(0x07000000);
 const BG_PALETTE: *volatile [16]u32 = @ptrFromInt(0x05000000);
 const SPR_PALETTE: *volatile [16]u32 = @ptrFromInt(0x05000200);
 
@@ -202,14 +190,12 @@ export fn _start() noreturn {
         VRAM_OBJ_TILE[i] = tile_data.tiles[i];
     }
 
-    OAM[0] = Obj{ .attr0 = ObjAttr0{
+    OAM.* = ObjAttr{
+        .x = 0,
         .y = 0,
         .shape = .square,
-    } };
-    OAM[1] = Obj{ .attr1 = ObjAttr1{
-        .x = 0,
         .size = .size_64,
-    } };
+    };
 
     IO_DISPLAY_CONTROL.* = DisplayControl{
         .bg_mode = .mode0,
