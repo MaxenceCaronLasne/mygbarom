@@ -56,6 +56,9 @@ const VRAM_OBJ_TILE: *volatile [512]u32 = @ptrFromInt(0x06010000);
 const OAM: *volatile ObjAttr = @ptrFromInt(0x07000000);
 const BG_PALETTE: *volatile [16]u32 = @ptrFromInt(0x05000000);
 const SPR_PALETTE: *volatile [16]u32 = @ptrFromInt(0x05000200);
+const LOG_INIT: *volatile u16 = @ptrFromInt(0x04FFF780);
+const LOG_BUFFER: *volatile [128]u8 = @ptrFromInt(0x04FFF600);
+const LOG_SEND: *volatile u16 = @ptrFromInt(0x04FFF700);
 
 const BgMode = enum(u3) {
     mode0, // Tiled
@@ -182,6 +185,18 @@ export fn _start() noreturn {
         \\bx r0
     );
 
+    LOG_INIT.* = 0xC0DE;
+    const is_init = LOG_INIT.*;
+    if (is_init != 0x1DEA) {
+        @panic("aie");
+    }
+
+    LOG_BUFFER[0] = 'l';
+    LOG_BUFFER[1] = 'o';
+    LOG_BUFFER[2] = 'l';
+    LOG_BUFFER[3] = '\x00';
+    LOG_SEND.* = 0x102;
+
     // memcpy doesn't work properly, probably because volatile is not respected
     for (0..tile_data.pal.len) |i| {
         SPR_PALETTE[i] = tile_data.pal[i];
@@ -202,6 +217,7 @@ export fn _start() noreturn {
         .obj_char_vram_mapping = .one_dimensional,
         .is_obj_displayed = true,
     };
+
     // VRAM[120 + 80 * 240] = 0x001F;
     // VRAM[136 + 80 * 240] = 0x03E0;
     // VRAM[120 + 96 * 240] = 0x7C00;
