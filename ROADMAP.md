@@ -10,11 +10,16 @@
     - [x] Put dots in VRAM
     - [x] Then loop
   - [ ] Write a program that shows a background and a sprite that can be moved
-    - [ ] Show a sprite
+    - [x] Show a sprite
       - [x] Load graphics and palette into object VRAM and palette
-      - [ ] Set attributes in OAM to use the appropriate tiles and set the size
-      - [ ] Switch on objects in display control register
-      - [ ] Set the mapping mode in display control register
+      - [x] Set attributes in OAM to use the appropriate tiles and set the size
+      - [x] Switch on objects in display control register
+      - [x] Set the mapping mode in display control register
+    - [ ] Move a sprite
+      - [ ] Add a object shadow buffer
+      - [ ] Check when it's vblank
+      - [ ] Update OAM at vblank
+      - [ ] Move sprite at each vblank
     - [ ] Show background
     - [ ] Loop and check if keypads are pressed
     - [ ] Move the sprite
