@@ -1,5 +1,7 @@
 const tile_data = @import("metroid_sprite_data.zig");
 
+const Logger = @import("log.zig");
+
 const ObjMode = enum(u2) {
     normal,
     affine,
@@ -56,9 +58,6 @@ const VRAM_OBJ_TILE: *volatile [512]u32 = @ptrFromInt(0x06010000);
 const OAM: *volatile ObjAttr = @ptrFromInt(0x07000000);
 const BG_PALETTE: *volatile [16]u32 = @ptrFromInt(0x05000000);
 const SPR_PALETTE: *volatile [16]u32 = @ptrFromInt(0x05000200);
-const LOG_INIT: *volatile u16 = @ptrFromInt(0x04FFF780);
-const LOG_BUFFER: *volatile [128]u8 = @ptrFromInt(0x04FFF600);
-const LOG_SEND: *volatile u16 = @ptrFromInt(0x04FFF700);
 
 const BgMode = enum(u3) {
     mode0, // Tiled
@@ -165,37 +164,12 @@ export var rom_header linksection(".gbaheader") = Header{
     .reserved2 = [_]u8{ 0, 0 },
 };
 
-export fn _start() noreturn {
-    asm volatile (
-        \\.arm
-        \\.cpu arm7tdmi
-        // Stop interrupts (0x4000000 + 0x208 = master interrupt enable register)
-        \\mov r0, #0x4000000
-        \\str r0, [r0, #0x208]
-        // Set mode to IRQ (0b10010) and set mode stack pointer
-        \\mov r0, #0x12
-        \\msr cpsr, r0
-        \\ldr sp, =__sp_irq
-        // Set mode to privileged user (0b11111) and set mode stack pointer
-        \\mov r0, #0x1f
-        \\msr cpsr, r0
-        \\ldr sp, =__sp_usr
-        // Jump to next instruction in thumb mode
-        \\add r0, pc, #1
-        \\bx r0
-    );
+fn main() anyerror!void {
+    var logger = Logger.init();
 
-    LOG_INIT.* = 0xC0DE;
-    const is_init = LOG_INIT.*;
-    if (is_init != 0x1DEA) {
-        @panic("aie");
-    }
-
-    LOG_BUFFER[0] = 'l';
-    LOG_BUFFER[1] = 'o';
-    LOG_BUFFER[2] = 'l';
-    LOG_BUFFER[3] = '\x00';
-    LOG_SEND.* = 0x102;
+    try logger.print(.warn, "mdr {d}", .{1});
+    try logger.print(.warn, "mdr {d}", .{2});
+    try logger.print(.warn, "mdr {d}", .{3});
 
     // memcpy doesn't work properly, probably because volatile is not respected
     for (0..tile_data.pal.len) |i| {
@@ -221,6 +195,29 @@ export fn _start() noreturn {
     // VRAM[120 + 80 * 240] = 0x001F;
     // VRAM[136 + 80 * 240] = 0x03E0;
     // VRAM[120 + 96 * 240] = 0x7C00;
+}
+
+export fn _start() noreturn {
+    asm volatile (
+        \\.arm
+        \\.cpu arm7tdmi
+        // Stop interrupts (0x4000000 + 0x208 = master interrupt enable register)
+        \\mov r0, #0x4000000
+        \\str r0, [r0, #0x208]
+        // Set mode to IRQ (0b10010) and set mode stack pointer
+        \\mov r0, #0x12
+        \\msr cpsr, r0
+        \\ldr sp, =__sp_irq
+        // Set mode to privileged user (0b11111) and set mode stack pointer
+        \\mov r0, #0x1f
+        \\msr cpsr, r0
+        \\ldr sp, =__sp_usr
+        // Jump to next instruction in thumb mode
+        \\add r0, pc, #1
+        \\bx r0
+    );
+
+    main() catch @panic("main exited with error");
 
     while (true) {}
 }

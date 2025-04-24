@@ -15,6 +15,7 @@
       - [x] Set attributes in OAM to use the appropriate tiles and set the size
       - [x] Switch on objects in display control register
       - [x] Set the mapping mode in display control register
+    - [x] Write a logger
     - [ ] Move a sprite
       - [ ] Add a object shadow buffer
       - [ ] Check when it's vblank
