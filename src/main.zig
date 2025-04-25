@@ -1,94 +1,8 @@
 const tile_data = @import("metroid_sprite_data.zig");
 
 const Logger = @import("log.zig");
-
-const ObjMode = enum(u2) {
-    normal,
-    affine,
-    disabled,
-    double_affine,
-};
-
-const ObjGfx = enum(u2) {
-    normal,
-    alpha,
-    window,
-    _,
-};
-
-const ColorMode = enum(u1) {
-    bpp4,
-    bpp8,
-};
-
-const SpriteShape = enum(u2) {
-    square,
-    wide,
-    tall,
-    _,
-};
-
-const SpriteSize = enum(u2) {
-    size_8,
-    size_16,
-    size_32,
-    size_64,
-};
-
-const ObjAttr = packed struct(u48) {
-    y: u8 = 0,
-    object_mode: ObjMode = .normal,
-    gfx: ObjGfx = .normal,
-    is_mosaic_enabled: bool = false,
-    color_mode: ColorMode = .bpp4,
-    shape: SpriteShape = .square,
-    x: u9 = 0,
-    _: u3 = 0,
-    is_hflip: bool = false,
-    is_vflip: bool = false,
-    size: SpriteSize = .size_8,
-    tid: u10 = 0,
-    priority: u2 = 0,
-    palette_blank: u4 = 0,
-};
-
-const IO_DISPLAY_CONTROL: *volatile DisplayControl = @ptrFromInt(0x04000000);
-const VRAM: [*]volatile u16 = @ptrFromInt(0x06000000);
-const VRAM_OBJ_TILE: *volatile [512]u32 = @ptrFromInt(0x06010000);
-const OAM: *volatile ObjAttr = @ptrFromInt(0x07000000);
-const BG_PALETTE: *volatile [16]u32 = @ptrFromInt(0x05000000);
-const SPR_PALETTE: *volatile [16]u32 = @ptrFromInt(0x05000200);
-
-const BgMode = enum(u3) {
-    mode0, // Tiled
-    mode1, // Tiled
-    mode2, // Tiled
-    mode3, // Bitmap: 240x160; 16bpp; 1x 0x12C00; no page-flip
-    mode4, // Bitmap: 240x160; 8bpp; 2x 0x9600; yes page-flip
-    mode5, // Bitmap: 160x128; 16bpp; 2x 0xA000; yes page-flip
-};
-
-const ObjCharacterVramMapping = enum(u1) {
-    two_dimensional,
-    one_dimensional,
-};
-
-const DisplayControl = packed struct(u16) {
-    bg_mode: BgMode = .mode0,
-    cgb_mode_ro: bool = false, // read only
-    display_frame_select: u1 = 0,
-    is_hblank_interval_free: bool = false,
-    obj_char_vram_mapping: ObjCharacterVramMapping = .two_dimensional,
-    is_forced_blank: bool = false,
-    is_bg0_displayed: bool = false,
-    is_bg1_displayed: bool = false,
-    is_bg2_displayed: bool = false,
-    is_bg3_displayed: bool = false,
-    is_obj_displayed: bool = false,
-    is_window0_displayed: bool = false,
-    is_window1_displayed: bool = false,
-    is_obj_window_displayed: bool = false,
-};
+const Obj = @import("obj.zig");
+const Display = @import("display.zig");
 
 const Header = extern struct {
     entry_point: u32,
@@ -172,29 +86,35 @@ fn main() anyerror!void {
     try logger.print(.warn, "mdr {d}", .{3});
 
     // memcpy doesn't work properly, probably because volatile is not respected
-    for (0..tile_data.pal.len) |i| {
-        SPR_PALETTE[i] = tile_data.pal[i];
-    }
-    for (0..tile_data.tiles.len) |i| {
-        VRAM_OBJ_TILE[i] = tile_data.tiles[i];
-    }
+    Display.load_palette(tile_data.pal);
+    Display.load_tiles(tile_data.tiles);
 
-    OAM.* = ObjAttr{
-        .x = 0,
-        .y = 0,
-        .shape = .square,
-        .size = .size_64,
-    };
-
-    IO_DISPLAY_CONTROL.* = DisplayControl{
+    Display.set_display_ctrl(.{
         .bg_mode = .mode0,
         .obj_char_vram_mapping = .one_dimensional,
         .is_obj_displayed = true,
-    };
+    });
 
-    // VRAM[120 + 80 * 240] = 0x001F;
-    // VRAM[136 + 80 * 240] = 0x03E0;
-    // VRAM[120 + 96 * 240] = 0x7C00;
+    var x: u9 = 0;
+    var y: u8 = 0;
+
+    while (true) {
+        try logger.print(.warn, "loop", .{});
+
+        const attr = Obj.Attribute{
+            .x = x,
+            .y = y,
+            .shape = .square,
+            .size = .size_64,
+        };
+
+        x += 1;
+        y += 1;
+
+        Display.wait_for_vblank(&logger);
+
+        Obj.OAM.* = attr;
+    }
 }
 
 export fn _start() noreturn {

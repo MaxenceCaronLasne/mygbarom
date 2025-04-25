@@ -16,11 +16,10 @@
       - [x] Switch on objects in display control register
       - [x] Set the mapping mode in display control register
     - [x] Write a logger
-    - [ ] Move a sprite
-      - [ ] Add a object shadow buffer
-      - [ ] Check when it's vblank
-      - [ ] Update OAM at vblank
-      - [ ] Move sprite at each vblank
+    - [x] Move a sprite
+      - [x] Check when it's vblank
+      - [x] Update OAM at vblank
+      - [x] Move sprite at each vblank
     - [ ] Show background
     - [ ] Loop and check if keypads are pressed
     - [ ] Move the sprite
