@@ -1,7 +1,7 @@
 MEMORY {
-  rom : ORIGIN = 0x08000000, LENGTH = 32M
-  iwram : ORIGIN = 0x03000000, LENGTH = 32K
-  ewram : ORIGIN = 0x02000000, LENGTH = 256K
+  rom (rx) : ORIGIN = 0x08000000, LENGTH = 32M
+  iwram (rw) : ORIGIN = 0x03000000, LENGTH = 32K
+  ewram (rw): ORIGIN = 0x02000000, LENGTH = 256K
 }
 
 ENTRY(_start)
@@ -26,7 +26,7 @@ __sp_usr = 0x03007F00;
 SECTIONS {
   . = __text_start;
   .text : {
-    KEEP(*(.gbaheader))
+    KEEP(*(.gbaheader)) /* KEEP to keep the section even if no symbol is referenced */
     *(.text)
   } >rom = 0xff
 }

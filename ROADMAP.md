@@ -22,6 +22,8 @@
       - [x] Move sprite at each vblank
     - [ ] Show background
     - [ ] Loop and check if keypads are pressed
-    - [ ] Move the sprite
-- [ ] write comprehensive documentation step by step
+    - [ ] Move the sprite following keypresses
+  - [ ] Use a dynamic allocator for OBJ attribute shadows
+  - [ ] Use IRQ for vblank signal
+- [x] write comprehensive documentation step by step
 - [ ] test suite
