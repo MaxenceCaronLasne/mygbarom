@@ -4,11 +4,15 @@ const logger = @import("gba/log.zig");
 const obj = @import("gba/obj.zig");
 const display = @import("gba/display.zig");
 const header = @import("gba/header.zig");
+const mem = @import("gba/mem.zig");
+const ecs = @import("ecs");
 
 export var rom_header linksection(".gbaheader") = header.init("MYGBAROM0000", "MGRM", "MC");
 
 pub fn main() anyerror!void {
     logger.init();
+
+    _ = ecs.Registry.init(mem.iwram_allocator());
 
     // memcpy doesn't work properly, probably because volatile is not respected
     display.load_palette(tile_data.pal);
@@ -20,11 +24,11 @@ pub fn main() anyerror!void {
         .is_obj_displayed = true,
     });
 
-    var x: u9 = 0;
-    var y: u8 = 0;
+    var x: u9 = 100;
+    var y: u8 = 50;
 
     while (true) {
-        try logger.print(.warn, "loop", .{});
+        try logger.print(.debug, "loop", .{});
 
         const attr = obj.Attribute{
             .x = x,
@@ -37,7 +41,6 @@ pub fn main() anyerror!void {
         y += 1;
 
         display.wait_for_vblank();
-
         obj.OAM.* = attr;
     }
 }
