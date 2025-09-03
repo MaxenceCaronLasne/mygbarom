@@ -12,7 +12,7 @@ pub fn build(b: *std.Build) void {
 
     var exe = b.addExecutable(.{
         .name = "out",
-        .root_source_file = b.path("src/main.zig"),
+        .root_source_file = b.path("src/start.zig"),
         .target = b.resolveTargetQuery(target),
         .optimize = optimize,
     });

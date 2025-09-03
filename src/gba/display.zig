@@ -1,4 +1,4 @@
-const Logger = @import("log.zig");
+const logger = @import("log.zig");
 
 const IO_DISPLAY_CONTROL: *volatile DisplayControl = @ptrFromInt(0x04000000);
 const VRAM: [*]volatile u16 = @ptrFromInt(0x06000000);
@@ -54,7 +54,7 @@ pub fn set_display_ctrl(ctrl: DisplayControl) void {
     IO_DISPLAY_CONTROL.* = ctrl;
 }
 
-pub fn wait_for_vblank(logger: *Logger) void {
+pub fn wait_for_vblank() void {
     while (VCOUNT.* >= 160) {}
     while (VCOUNT.* < 160) {}
     logger.print(.warn, "vcount={d}", .{VCOUNT.*}) catch {};
