@@ -1,95 +1,20 @@
 const tile_data = @import("metroid_sprite_data.zig");
 
-const Logger = @import("log.zig");
-const Obj = @import("obj.zig");
-const Display = @import("display.zig");
+const logger = @import("gba/log.zig");
+const obj = @import("gba/obj.zig");
+const display = @import("gba/display.zig");
+const header = @import("gba/header.zig");
 
-const Header = extern struct {
-    entry_point: u32,
-    nintendo_logo: [156]u8,
-    game_name: [12]u8,
-    game_code: [4]u8,
-    maker_code: [2]u8,
-    fixed_value: u8,
-    unit_code: u8,
-    device_type: u8,
-    reserved1: [7]u8,
-    software_version: u8,
-    complement_check: u8,
-    reserved2: [2]u8,
-};
+export var rom_header linksection(".gbaheader") = header.init("MYGBAROM0000", "MGRM", "MC");
 
-export var rom_header linksection(".gbaheader") = Header{
-    // Fixed entry point instruction (branch to start + header size)
-    .entry_point = 0xEA00002E,
-
-    // Nintendo logo (compressed bitmap)
-    .nintendo_logo = [_]u8{
-        0x24, 0xFF, 0xAE, 0x51, 0x69, 0x9A, 0xA2, 0x21,
-        0x3D, 0x84, 0x82, 0x0A, 0x84, 0xE4, 0x09, 0xAD,
-        0x11, 0x24, 0x8B, 0x98, 0xC0, 0x81, 0x7F, 0x21,
-        0xA3, 0x52, 0xBE, 0x19, 0x93, 0x09, 0xCE, 0x20,
-        0x10, 0x46, 0x4A, 0x4A, 0xF8, 0x27, 0x31, 0xEC,
-        0x58, 0xC7, 0xE8, 0x33, 0x82, 0xE3, 0xCE, 0xBF,
-        0x85, 0xF4, 0xDF, 0x94, 0xCE, 0x4B, 0x09, 0xC1,
-        0x94, 0x56, 0x8A, 0xC0, 0x13, 0x72, 0xA7, 0xFC,
-        0x9F, 0x84, 0x4D, 0x73, 0xA3, 0xCA, 0x9A, 0x61,
-        0x58, 0x97, 0xA3, 0x27, 0xFC, 0x03, 0x98, 0x76,
-        0x23, 0x1D, 0xC7, 0x61, 0x03, 0x04, 0xAE, 0x56,
-        0xBF, 0x38, 0x84, 0x00, 0x40, 0xA7, 0x0E, 0xFD,
-        0xFF, 0x52, 0xFE, 0x03, 0x6F, 0x95, 0x30, 0xF1,
-        0x97, 0xFB, 0xC0, 0x85, 0x60, 0xD6, 0x80, 0x25,
-        0xA9, 0x63, 0xBE, 0x03, 0x01, 0x4E, 0x38, 0xE2,
-        0xF9, 0xA2, 0x34, 0xFF, 0xBB, 0x3E, 0x03, 0x44,
-        0x78, 0x00, 0x90, 0xCB, 0x88, 0x11, 0x3A, 0x94,
-        0x65, 0xC0, 0x7C, 0x63, 0x87, 0xF0, 0x3C, 0xAF,
-        0xD6, 0x25, 0xE4, 0x8B, 0x38, 0x0A, 0xAC, 0x72,
-        0x21, 0xD4, 0xF8, 0x07,
-    },
-
-    // Game title (12 bytes, padded with zeroes)
-    .game_name = [_]u8{ 'M', 'Y', 'G', 'B', 'A', 'R', 'O', 'M', 0, 0, 0, 0 },
-
-    // Game code (4 bytes)
-    .game_code = [_]u8{ 'M', 'G', 'R', 'M' },
-
-    // Maker code (2 bytes)
-    .maker_code = [_]u8{ '0', '0' },
-
-    // Fixed value (must be 0x96)
-    .fixed_value = 0x96,
-
-    // Main unit code (0x00 for GBA)
-    .unit_code = 0x00,
-
-    // Device type (0x00)
-    .device_type = 0x00,
-
-    // Reserved (7 bytes of 0)
-    .reserved1 = [_]u8{ 0, 0, 0, 0, 0, 0, 0 },
-
-    // Software version (0)
-    .software_version = 0x00,
-
-    // Complement check (will be calculated at build time - placeholder)
-    .complement_check = 0x00,
-
-    // Reserved (2 bytes of 0)
-    .reserved2 = [_]u8{ 0, 0 },
-};
-
-fn main() anyerror!void {
-    var logger = Logger.init();
-
-    try logger.print(.warn, "mdr {d}", .{1});
-    try logger.print(.warn, "mdr {d}", .{2});
-    try logger.print(.warn, "mdr {d}", .{3});
+pub fn main() anyerror!void {
+    logger.init();
 
     // memcpy doesn't work properly, probably because volatile is not respected
-    Display.load_palette(tile_data.pal);
-    Display.load_tiles(tile_data.tiles);
+    display.load_palette(tile_data.pal);
+    display.load_tiles(tile_data.tiles);
 
-    Display.set_display_ctrl(.{
+    display.set_display_ctrl(.{
         .bg_mode = .mode0,
         .obj_char_vram_mapping = .one_dimensional,
         .is_obj_displayed = true,
@@ -101,7 +26,7 @@ fn main() anyerror!void {
     while (true) {
         try logger.print(.warn, "loop", .{});
 
-        const attr = Obj.Attribute{
+        const attr = obj.Attribute{
             .x = x,
             .y = y,
             .shape = .square,
@@ -111,33 +36,8 @@ fn main() anyerror!void {
         x += 1;
         y += 1;
 
-        Display.wait_for_vblank(&logger);
+        display.wait_for_vblank();
 
-        Obj.OAM.* = attr;
+        obj.OAM.* = attr;
     }
-}
-
-export fn _start() noreturn {
-    asm volatile (
-        \\.arm
-        \\.cpu arm7tdmi
-        // Stop interrupts (0x4000000 + 0x208 = master interrupt enable register)
-        \\mov r0, #0x4000000
-        \\str r0, [r0, #0x208]
-        // Set mode to IRQ (0b10010) and set mode stack pointer
-        \\mov r0, #0x12
-        \\msr cpsr, r0
-        \\ldr sp, =__sp_irq
-        // Set mode to privileged user (0b11111) and set mode stack pointer
-        \\mov r0, #0x1f
-        \\msr cpsr, r0
-        \\ldr sp, =__sp_usr
-        // Jump to next instruction in thumb mode
-        \\add r0, pc, #1
-        \\bx r0
-    );
-
-    main() catch @panic("main exited with error");
-
-    while (true) {}
 }
